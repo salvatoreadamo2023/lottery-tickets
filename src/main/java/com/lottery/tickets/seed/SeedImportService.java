@@ -171,7 +171,7 @@ public class SeedImportService implements CommandLineRunner {
         return counts;
     }
 
-    private List<String> validateRowCompleto(SeedRow row, Map<String, Integer> ticketIdOccurrences, Map<String, Integer> privateCodeOccurrences) {
+     List<String> validateRowCompleto(SeedRow row, Map<String, Integer> ticketIdOccurrences, Map<String, Integer> privateCodeOccurrences) {
         List<String> errors = new ArrayList<>();
 
         if (row.getTicketId() == null) {
@@ -224,7 +224,7 @@ public class SeedImportService implements CommandLineRunner {
         return errors;
     }
 
-    private boolean isValidStatus(String status) {
+     boolean isValidStatus(String status) {
         String normalized = status.trim().toUpperCase();
         Status[] statuses = Status.values();
         for (int i = 0; i < statuses.length; i++) {
