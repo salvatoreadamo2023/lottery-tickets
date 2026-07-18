@@ -18,7 +18,7 @@ public class SeedImportError {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "row_number", nullable = false)
+    @Column(name = "row_num", nullable = false)
     private Integer rowNumber;
 
     @Column(name = "raw_ticket_id")
