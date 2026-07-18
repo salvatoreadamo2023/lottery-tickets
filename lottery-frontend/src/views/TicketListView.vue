@@ -5,6 +5,7 @@ import { getTickets, createTicket, updateTicketStatus, deleteTicket } from '../s
 const tickets = ref([])
 const loading = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 
 const filterStatus = ref('')
 const filterFrom = ref('')
@@ -12,9 +13,21 @@ const filterTo = ref('')
 
 const newExtractAt = ref('')
 
+function showSuccess(message) {
+  successMessage.value = message
+  errorMessage.value = ''
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
+function showError(message) {
+  errorMessage.value = message
+  successMessage.value = ''
+}
+
 async function loadTickets() {
   loading.value = true
-  errorMessage.value = ''
   try {
     const filters = {}
     if (filterStatus.value) filters.status = filterStatus.value
@@ -24,7 +37,7 @@ async function loadTickets() {
     const response = await getTickets(filters)
     tickets.value = response.data
   } catch (error) {
-    errorMessage.value = 'Errore nel caricamento dei biglietti'
+    showError('Errore nel caricamento dei biglietti')
     console.error(error)
   } finally {
     loading.value = false
@@ -33,15 +46,16 @@ async function loadTickets() {
 
 async function handleCreate() {
   if (!newExtractAt.value) {
-    errorMessage.value = 'Inserisci una data di estrazione'
+    showError('Inserisci una data di estrazione')
     return
   }
   try {
     await createTicket(newExtractAt.value)
     newExtractAt.value = ''
+    showSuccess('Biglietto creato con successo')
     await loadTickets()
   } catch (error) {
-    errorMessage.value = 'Errore nella creazione del biglietto'
+    showError('Errore nella creazione del biglietto')
     console.error(error)
   }
 }
@@ -49,19 +63,25 @@ async function handleCreate() {
 async function handleStatusChange(ticketId, newStatus) {
   try {
     await updateTicketStatus(ticketId, newStatus)
+    showSuccess(`Stato di ${ticketId} aggiornato a ${newStatus}`)
     await loadTickets()
   } catch (error) {
-    errorMessage.value = 'Errore nel cambio stato (verifica che il biglietto non sia SCADUTO)'
+    showError('Errore nel cambio stato (verifica che il biglietto non sia SCADUTO)')
     console.error(error)
+    await loadTickets()
   }
 }
 
 async function handleDelete(ticketId) {
+  if (!confirm(`Sei sicuro di voler eliminare il biglietto ${ticketId}?`)) {
+    return
+  }
   try {
     await deleteTicket(ticketId)
+    showSuccess(`Biglietto ${ticketId} eliminato`)
     await loadTickets()
   } catch (error) {
-    errorMessage.value = 'Errore nella cancellazione'
+    showError('Errore nella cancellazione')
     console.error(error)
   }
 }
@@ -95,7 +115,8 @@ onMounted(() => {
       <button @click="loadTickets">Applica filtri</button>
     </section>
 
-    <p v-if="errorMessage" style="color: red">{{ errorMessage }}</p>
+    <p v-if="successMessage" class="success-banner">{{ successMessage }}</p>
+    <p v-if="errorMessage" class="error-banner">{{ errorMessage }}</p>
     <p v-if="loading">Caricamento...</p>
 
     <table v-if="!loading">
@@ -131,6 +152,7 @@ onMounted(() => {
     </table>
   </div>
 </template>
+
 <style scoped>
 div {
   max-width: 1100px;
@@ -229,10 +251,21 @@ td button:hover {
   background-color: #b02a37;
 }
 
-p[style*='color: red'] {
+.error-banner {
   background: #fdecea;
+  color: #dc3545;
   padding: 10px 14px;
   border-radius: 6px;
   border-left: 4px solid #dc3545;
+  margin-bottom: 16px;
+}
+
+.success-banner {
+  background: #eafaf1;
+  color: #1e7e34;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 4px solid #28a745;
+  margin-bottom: 16px;
 }
 </style>
