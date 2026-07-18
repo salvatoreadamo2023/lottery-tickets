@@ -48,4 +48,5 @@ public class TicketResponse {
 	public LocalDateTime getUpdatedAt() {
 		return updatedAt;
 	}
+	
 }

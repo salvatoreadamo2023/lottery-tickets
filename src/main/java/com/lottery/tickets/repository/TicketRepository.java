@@ -23,4 +23,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByStatusAndCreatedAtBetween(Status status, LocalDateTime from, LocalDateTime to);
 
     List<Ticket> findByExtractAtBeforeAndStatusNotIn(LocalDateTime now, List<Status> excludedStatuses);
+    
+    long countByStatus(Status status);
+
+    long countByStatusAndCreatedAtBetween(Status status, LocalDateTime from, LocalDateTime to);
+
+    long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }

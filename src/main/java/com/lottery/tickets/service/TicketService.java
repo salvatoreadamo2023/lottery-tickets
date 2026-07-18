@@ -1,5 +1,6 @@
 package com.lottery.tickets.service;
 
+import com.lottery.tickets.dto.KpiResponse;
 import com.lottery.tickets.dto.TicketRequest;
 import com.lottery.tickets.dto.TicketResponse;
 import com.lottery.tickets.dto.TicketStatusUpdateRequest;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -48,8 +51,27 @@ public class TicketService {
         return TicketResponse.fromEntity(ticket);
     }
 
-    public List<TicketResponse> getAllTickets() {
+   /* public List<TicketResponse> getAllTickets() {
         List<Ticket> tickets = ticketRepository.findAll();
+        List<TicketResponse> responses = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            responses.add(TicketResponse.fromEntity(ticket));
+        }
+        return responses;
+    }*/
+    public List<TicketResponse> getAllTickets(Status status, LocalDateTime from, LocalDateTime to) {
+        List<Ticket> tickets;
+
+        if (status != null && from != null && to != null) {
+            tickets = ticketRepository.findByStatusAndCreatedAtBetween(status, from, to);
+        } else if (status != null) {
+            tickets = ticketRepository.findByStatus(status);
+        } else if (from != null && to != null) {
+            tickets = ticketRepository.findByCreatedAtBetween(from, to);
+        } else {
+            tickets = ticketRepository.findAll();
+        }
+
         List<TicketResponse> responses = new ArrayList<>();
         for (Ticket ticket : tickets) {
             responses.add(TicketResponse.fromEntity(ticket));
@@ -87,7 +109,7 @@ public class TicketService {
     }
 
     private String generateTicketId() {
-        return "LT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "RF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private String generatePrivateCode() {
@@ -103,5 +125,30 @@ public class TicketService {
         audit.setSource(source);
         audit.setChangedAt(LocalDateTime.now());
         ticketAuditRepository.save(audit);
+    }
+    public KpiResponse getKpi(LocalDateTime from, LocalDateTime to) {
+        KpiResponse response = new KpiResponse();
+
+        long venduti;
+        if (from != null && to != null) {
+            venduti = ticketRepository.countByStatusAndCreatedAtBetween(Status.VENDUTO, from, to);
+        } else {
+            venduti = ticketRepository.countByStatus(Status.VENDUTO);
+        }
+        response.setVenduti(venduti);
+
+        Map<String, Long> distribuzione = new HashMap<>();
+        for (Status status : Status.values()) {
+            long count;
+            if (from != null && to != null) {
+                count = ticketRepository.countByStatusAndCreatedAtBetween(status, from, to);
+            } else {
+                count = ticketRepository.countByStatus(status);
+            }
+            distribuzione.put(status.name(), count);
+        }
+        response.setDistribuzionePerStato(distribuzione);
+
+        return response;
     }
 }
