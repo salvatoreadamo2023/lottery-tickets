@@ -51,23 +51,30 @@ public class TicketService {
         return TicketResponse.fromEntity(ticket);
     }
 
-   /* public List<TicketResponse> getAllTickets() {
-        List<Ticket> tickets = ticketRepository.findAll();
-        List<TicketResponse> responses = new ArrayList<>();
-        for (Ticket ticket : tickets) {
-            responses.add(TicketResponse.fromEntity(ticket));
-        }
-        return responses;
-    }*/
+    /**
+     * Restituisce i ticket applicando i filtri opzionali status/from/to.
+     * Gestisce tutte le combinazioni, incluso il caso in cui venga passato
+     * solo uno dei due estremi dell'intervallo temporale (from senza to, o
+     * viceversa): in tal caso il filtro è comunque applicato come "da from
+     * in poi" o "fino a to", invece di essere ignorato.
+     */
     public List<TicketResponse> getAllTickets(Status status, LocalDateTime from, LocalDateTime to) {
         List<Ticket> tickets;
 
         if (status != null && from != null && to != null) {
             tickets = ticketRepository.findByStatusAndCreatedAtBetween(status, from, to);
+        } else if (status != null && from != null) {
+            tickets = ticketRepository.findByStatusAndCreatedAtAfter(status, from);
+        } else if (status != null && to != null) {
+            tickets = ticketRepository.findByStatusAndCreatedAtBefore(status, to);
         } else if (status != null) {
             tickets = ticketRepository.findByStatus(status);
         } else if (from != null && to != null) {
             tickets = ticketRepository.findByCreatedAtBetween(from, to);
+        } else if (from != null) {
+            tickets = ticketRepository.findByCreatedAtAfter(from);
+        } else if (to != null) {
+            tickets = ticketRepository.findByCreatedAtBefore(to);
         } else {
             tickets = ticketRepository.findAll();
         }
@@ -126,29 +133,35 @@ public class TicketService {
         audit.setChangedAt(LocalDateTime.now());
         ticketAuditRepository.save(audit);
     }
+
+    /**
+     * Calcola i KPI applicando lo stesso criterio di filtro temporale di
+     * getAllTickets: from e to possono essere passati singolarmente senza
+     * che il filtro venga ignorato.
+     */
     public KpiResponse getKpi(LocalDateTime from, LocalDateTime to) {
         KpiResponse response = new KpiResponse();
 
-        long venduti;
-        if (from != null && to != null) {
-            venduti = ticketRepository.countByStatusAndCreatedAtBetween(Status.VENDUTO, from, to);
-        } else {
-            venduti = ticketRepository.countByStatus(Status.VENDUTO);
-        }
-        response.setVenduti(venduti);
+        response.setVenduti(countByStatusAndRange(Status.VENDUTO, from, to));
 
         Map<String, Long> distribuzione = new HashMap<>();
         for (Status status : Status.values()) {
-            long count;
-            if (from != null && to != null) {
-                count = ticketRepository.countByStatusAndCreatedAtBetween(status, from, to);
-            } else {
-                count = ticketRepository.countByStatus(status);
-            }
-            distribuzione.put(status.name(), count);
+            distribuzione.put(status.name(), countByStatusAndRange(status, from, to));
         }
         response.setDistribuzionePerStato(distribuzione);
 
         return response;
+    }
+
+    private long countByStatusAndRange(Status status, LocalDateTime from, LocalDateTime to) {
+        if (from != null && to != null) {
+            return ticketRepository.countByStatusAndCreatedAtBetween(status, from, to);
+        } else if (from != null) {
+            return ticketRepository.countByStatusAndCreatedAtAfter(status, from);
+        } else if (to != null) {
+            return ticketRepository.countByStatusAndCreatedAtBefore(status, to);
+        } else {
+            return ticketRepository.countByStatus(status);
+        }
     }
 }
