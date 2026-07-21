@@ -104,7 +104,15 @@ Audit trail completo (`ticket_audit`) su ogni operazione (create, update, delete
 
 Tracciamento strutturato degli errori di import del seed (`seed_import_error`).
 
-Pipeline CI (GitHub Actions) che esegue i test automaticamente ad ogni push (implementati 6 test).
+- Pipeline CI (GitHub Actions) che esegue i test automaticamente ad ogni push (implementati 8 test):
+  - `updateStatus_shouldThrowException_whenTicketIsScaduto` — verifica che un ticket SCADUTO non possa cambiare stato
+  - `getTicket_shouldThrowException_whenTicketNotFound` — verifica gestione errore su ticket inesistente
+  - `createTicket_shouldReturnBadRequest_whenExtractAtIsInThePast` — verifica validazione data di estrazione nel passato
+  - `createTicket_shouldReturnCreated_whenExtractAtIsValid` — verifica creazione corretta con data valida
+  - `createTicket_shouldReturnUnauthorized_whenNotAuthenticated` — verifica protezione endpoint senza autenticazione
+  - `getAllTickets_shouldReturnOk_whenFilteringByDateRange` — verifica filtro per intervallo di date sulla lista ticket
+  - `validateRowCompleto_shouldReturnNoErrors_whenRowIsClean` — verifica che una riga pulita del seed non generi errori
+  - `validateRowCompleto_shouldReturnError_whenExtractAtIsBeforeCreatedAt` — verifica scarto di una riga con date incoerenti
 
 Frontend Vue funzionante (non solo mockup): lista biglietti con filtri e CRUD, dashboard KPI con grafico.
 
