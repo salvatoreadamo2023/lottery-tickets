@@ -20,4 +20,5 @@ jobs:
           cache: maven
 
       - name: Build e test
+        working-directory: ./lottery-backend
         run: mvn -B clean test
