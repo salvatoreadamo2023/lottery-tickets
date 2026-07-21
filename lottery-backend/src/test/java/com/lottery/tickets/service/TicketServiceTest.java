@@ -36,6 +36,7 @@ class TicketServiceTest {
 
     @BeforeEach
     void setUp() {
+        // ticket già scaduto, riutilizzato nel test della regola di business
         scadutoTicket = new Ticket();
         scadutoTicket.setId(1L);
         scadutoTicket.setTicketId("LT-TEST0001");
@@ -46,6 +47,7 @@ class TicketServiceTest {
         scadutoTicket.setUpdatedAt(LocalDateTime.now().minusDays(1));
     }
 
+    // verifica che un ticket scaduto non possa cambiare stato (regola di business)
     @Test
     void updateStatus_shouldThrowException_whenTicketIsScaduto() {
         when(ticketRepository.findByTicketId("LT-TEST0001")).thenReturn(Optional.of(scadutoTicket));
@@ -57,6 +59,7 @@ class TicketServiceTest {
                 ticketService.updateStatus("LT-TEST0001", request));
     }
 
+    // verifica che cercare un ticket inesistente lanci l'eccezione giusta
     @Test
     void getTicket_shouldThrowException_whenTicketNotFound() {
         when(ticketRepository.findByTicketId("LT-NOTEXIST")).thenReturn(Optional.empty());

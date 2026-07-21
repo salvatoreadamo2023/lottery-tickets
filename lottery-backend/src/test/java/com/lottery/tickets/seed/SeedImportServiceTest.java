@@ -12,6 +12,7 @@ class SeedImportServiceTest {
 
     private final SeedImportService seedImportService = new SeedImportService(null, null, null);
 
+    // caso base: una riga senza problemi non deve generare errori
     @Test
     void validateRowCompleto_shouldReturnNoErrors_whenRowIsClean() {
         SeedRow row = new SeedRow(1, "PRIVATE001", "TICKET001",
@@ -27,6 +28,7 @@ class SeedImportServiceTest {
         assertTrue(errors.isEmpty());
     }
 
+    // caso sporco: extract_at prima di created_at deve essere scartato
     @Test
     void validateRowCompleto_shouldReturnError_whenExtractAtIsBeforeCreatedAt() {
         SeedRow row = new SeedRow(3, "PRIVATE003", "TICKET003",
