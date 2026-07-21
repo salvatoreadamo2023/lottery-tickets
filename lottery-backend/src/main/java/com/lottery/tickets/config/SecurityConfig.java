@@ -52,7 +52,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
+//rendiamo pubblico swagger e api-docs , tutte le altre api protette da autenticazione
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

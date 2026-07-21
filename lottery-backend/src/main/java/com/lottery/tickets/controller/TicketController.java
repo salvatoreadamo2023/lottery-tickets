@@ -26,22 +26,23 @@ public class TicketController {
 		this.ticketService = ticketService;
 	}
 
+//creazione ticket
 	@PostMapping
 	public ResponseEntity<TicketResponse> createTicket(@Valid @RequestBody TicketRequest request) {
 		TicketResponse response = ticketService.createTicket(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
-	/*@GetMapping
-	public ResponseEntity<List<TicketResponse>> getAllTickets() {
-		return ResponseEntity.ok(ticketService.getAllTickets());
-	}*/
+	/*
+	 * @GetMapping public ResponseEntity<List<TicketResponse>> getAllTickets() {
+	 * return ResponseEntity.ok(ticketService.getAllTickets()); }
+	 */
+	// lista ticket con filtro date
 	@GetMapping
-	public ResponseEntity<List<TicketResponse>> getAllTickets(
-	        @RequestParam(required = false) Status status,
-	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-	    return ResponseEntity.ok(ticketService.getAllTickets(status, from, to));
+	public ResponseEntity<List<TicketResponse>> getAllTickets(@RequestParam(required = false) Status status,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+		return ResponseEntity.ok(ticketService.getAllTickets(status, from, to));
 	}
 
 	@GetMapping("/{ticketId}")
@@ -61,6 +62,7 @@ public class TicketController {
 		return ResponseEntity.noContent().build();
 	}
 
+//lista kpi aggregati con filtro date
 	@GetMapping("/kpi")
 	public ResponseEntity<KpiResponse> getKpi(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,

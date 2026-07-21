@@ -15,39 +15,40 @@ import java.util.List;
 @Component
 public class TicketExpirationJob {
 
-    private final TicketRepository ticketRepository;
-    private final TicketAuditRepository ticketAuditRepository;
+	private final TicketRepository ticketRepository;
+	private final TicketAuditRepository ticketAuditRepository;
 
-    public TicketExpirationJob(TicketRepository ticketRepository, TicketAuditRepository ticketAuditRepository) {
-        this.ticketRepository = ticketRepository;
-        this.ticketAuditRepository = ticketAuditRepository;
-    }
+	public TicketExpirationJob(TicketRepository ticketRepository, TicketAuditRepository ticketAuditRepository) {
+		this.ticketRepository = ticketRepository;
+		this.ticketAuditRepository = ticketAuditRepository;
+	}
 
-    @Scheduled(cron = "0 * * * * *")
-    public void expireTickets() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Status> excludedStatuses = Arrays.asList(Status.SCADUTO, Status.VENDUTO);
+//scheduler ogni minuto check tickets scaduti
+	@Scheduled(cron = "0 * * * * *")
+	public void expireTickets() {
+		LocalDateTime now = LocalDateTime.now();
+		List<Status> excludedStatuses = Arrays.asList(Status.SCADUTO, Status.VENDUTO);
 
-        List<Ticket> ticketsToExpire = ticketRepository.findByExtractAtBeforeAndStatusNotIn(now, excludedStatuses);
+		List<Ticket> ticketsToExpire = ticketRepository.findByExtractAtBeforeAndStatusNotIn(now, excludedStatuses);
 
-        for (Ticket ticket : ticketsToExpire) {
-            Status oldStatus = ticket.getStatus();
-            ticket.setStatus(Status.SCADUTO);
-            ticket.setUpdatedAt(now);
-            ticketRepository.save(ticket);
+		for (Ticket ticket : ticketsToExpire) {
+			Status oldStatus = ticket.getStatus();
+			ticket.setStatus(Status.SCADUTO);
+			ticket.setUpdatedAt(now);
+			ticketRepository.save(ticket);
 
-            saveAudit(ticket.getTicketId(), oldStatus.name(), Status.SCADUTO.name());
-        }
-    }
+			saveAudit(ticket.getTicketId(), oldStatus.name(), Status.SCADUTO.name());
+		}
+	}
 
-    private void saveAudit(String ticketId, String oldStatus, String newStatus) {
-        TicketAudit audit = new TicketAudit();
-        audit.setTicketId(ticketId);
-        audit.setOldStatus(oldStatus);
-        audit.setNewStatus(newStatus);
-        audit.setOperation("AUTO_EXPIRE");
-        audit.setSource("SCHEDULER");
-        audit.setChangedAt(LocalDateTime.now());
-        ticketAuditRepository.save(audit);
-    }
+	private void saveAudit(String ticketId, String oldStatus, String newStatus) {
+		TicketAudit audit = new TicketAudit();
+		audit.setTicketId(ticketId);
+		audit.setOldStatus(oldStatus);
+		audit.setNewStatus(newStatus);
+		audit.setOperation("AUTO_EXPIRE");
+		audit.setSource("SCHEDULER");
+		audit.setChangedAt(LocalDateTime.now());
+		ticketAuditRepository.save(audit);
+	}
 }
