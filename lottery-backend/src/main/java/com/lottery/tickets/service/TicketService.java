@@ -91,7 +91,7 @@ public class TicketService {
 		Status oldStatus = ticket.getStatus();
 		Status newStatus = request.getStatus();
 
-		if (oldStatus == Status.SCADUTO) {
+		if (oldStatus == Status.SCADUTO&& newStatus==Status.VENDUTO) {
 			throw new InvalidStatusException("Il ticket " + ticketId + " è SCADUTO e non può cambiare stato");
 		}
 

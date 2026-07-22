@@ -15,7 +15,7 @@ const newExtractAt = ref('')
 const creating = ref(false)
 
 const currentPage = ref(1)
-const pageSize = 20
+const pageSize = 10
 
 const totalPages = computed(() => Math.max(1, Math.ceil(tickets.value.length / pageSize)))
 
@@ -160,8 +160,19 @@ onMounted(() => {
         <option value="VENDUTO">VENDUTO</option>
         <option value="SCADUTO">SCADUTO</option>
       </select>
-      <input type="datetime-local" v-model="filterFrom" placeholder="Da" :max="filterTo || nowForInput()" />
-      <input type="datetime-local" v-model="filterTo" placeholder="A" :min="filterFrom" :max="nowForInput()" />
+      <input
+        type="datetime-local"
+        v-model="filterFrom"
+        placeholder="Da"
+        :max="filterTo || nowForInput()"
+      />
+      <input
+        type="datetime-local"
+        v-model="filterTo"
+        placeholder="A"
+        :min="filterFrom"
+        :max="nowForInput()"
+      />
       <button @click="loadTickets">Applica filtri</button>
     </section>
 
@@ -183,7 +194,9 @@ onMounted(() => {
         <tr v-for="ticket in paginatedTickets" :key="ticket.ticketId">
           <td>{{ ticket.ticketId }}</td>
           <td>
-            <span class="badge" :class="`badge-${ticket.status.toLowerCase()}`">{{ ticket.status }}</span>
+            <span class="badge" :class="`badge-${ticket.status.toLowerCase()}`">{{
+              ticket.status
+            }}</span>
           </td>
           <td>{{ formatDateTime(ticket.createdAt) }}</td>
           <td>{{ formatDateTime(ticket.extractAt) }}</td>
@@ -210,7 +223,9 @@ onMounted(() => {
     <div class="pagination" v-if="!loading && tickets.length > 0">
       <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1">Precedente</button>
       <span>Pagina {{ currentPage }} di {{ totalPages }} ({{ tickets.length }} biglietti)</span>
-      <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages">Successiva</button>
+      <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages">
+        Successiva
+      </button>
     </div>
   </div>
 </template>
