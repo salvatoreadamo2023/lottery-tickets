@@ -10,16 +10,42 @@ const venduti = ref(0)
 const distribuzione = ref({})
 const loading = ref(false)
 const errorMessage = ref('')
+const applying = ref(false)
 
 const filterFrom = ref('')
 const filterTo = ref('')
 
+const statusColors = {
+  CREATO: '#2563eb',
+  SOSPESO: '#b45309',
+  VENDUTO: '#15803d',
+  SCADUTO: '#b91c1c',
+}
+
 const chartData = ref({
   labels: [],
-  datasets: [{ data: [], backgroundColor: ['#4a6cf7', '#f7b84a', '#4af7a0', '#f74a4a'] }],
+  datasets: [{ data: [], backgroundColor: [] }],
 })
 
+// restituisce la data/ora corrente nel formato richiesto da <input type="datetime-local">
+function nowForInput() {
+  const d = new Date()
+  d.setSeconds(0, 0)
+  const offset = d.getTimezoneOffset()
+  const local = new Date(d.getTime() - offset * 60000)
+  return local.toISOString().slice(0, 16)
+}
+
+// evita richieste multiple se l'utente clicca più volte velocemente su "Applica"
 async function loadKpi() {
+  if (applying.value) return
+
+  if (filterFrom.value && filterTo.value && new Date(filterFrom.value) > new Date(filterTo.value)) {
+    errorMessage.value = 'La data di inizio non può essere successiva alla data di fine'
+    return
+  }
+
+  applying.value = true
   loading.value = true
   errorMessage.value = ''
   try {
@@ -27,12 +53,13 @@ async function loadKpi() {
     venduti.value = response.data.venduti
     distribuzione.value = response.data.distribuzionePerStato
 
+    const labels = Object.keys(distribuzione.value)
     chartData.value = {
-      labels: Object.keys(distribuzione.value),
+      labels,
       datasets: [
         {
           data: Object.values(distribuzione.value),
-          backgroundColor: ['#4a6cf7', '#f7b84a', '#4af7a0', '#f74a4a'],
+          backgroundColor: labels.map(status => statusColors[status] || '#9ca3af'),
         },
       ],
     }
@@ -41,6 +68,7 @@ async function loadKpi() {
     console.error(error)
   } finally {
     loading.value = false
+    applying.value = false
   }
 }
 
@@ -55,12 +83,14 @@ onMounted(() => {
 
     <section>
       <h2>Filtro periodo (su data creazione)</h2>
-      <input type="datetime-local" v-model="filterFrom" />
-      <input type="datetime-local" v-model="filterTo" />
-      <button @click="loadKpi">Applica</button>
+      <input type="datetime-local" v-model="filterFrom" :max="filterTo || nowForInput()" />
+      <input type="datetime-local" v-model="filterTo" :min="filterFrom" :max="nowForInput()" />
+      <button @click="loadKpi" :disabled="applying">
+        {{ applying ? 'Applico...' : 'Applica' }}
+      </button>
     </section>
 
-    <p v-if="errorMessage" style="color: red">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="error-banner">{{ errorMessage }}</p>
     <p v-if="loading">Caricamento...</p>
 
     <div v-if="!loading" class="kpi-grid">
@@ -72,7 +102,8 @@ onMounted(() => {
       <div class="kpi-card chart-card">
         <span class="kpi-label">Distribuzione per stato</span>
         <div class="chart-wrapper">
-          <Pie :data="chartData" />
+          <Pie v-if="chartData.labels.length > 0" :data="chartData" />
+          <p v-else class="empty-state-small">Nessun dato disponibile per il periodo selezionato.</p>
         </div>
       </div>
     </div>
@@ -130,6 +161,20 @@ button:hover {
   background-color: #3854c9;
 }
 
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #dc3545;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 4px solid #dc3545;
+  margin-bottom: 16px;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -162,5 +207,12 @@ button:hover {
 .chart-wrapper {
   max-width: 320px;
   margin: 0 auto;
+}
+
+.empty-state-small {
+  text-align: center;
+  color: #6c757d;
+  font-size: 13px;
+  padding: 40px 0;
 }
 </style>
