@@ -22,17 +22,15 @@ Backend Spring Boot 3.4.2 (Java 17), frontend Vue 3 con Composition API, contain
 
 
 
-## 2. Interpretazione della regola di business 
-
-
+## 2. Interpretazione della regola di business
 
 Requisito: "I biglietti in stato SCADUTO non possono passare in stato VENDUTO".
 
+Ho adottato un'interpretazione letterale, limitando il blocco alla sola transizione SCADUTO → VENDUTO.
 
+Motivazione: un biglietto scaduto potrebbe risultare tale per un errore operativo (es. data di estrazione impostata erroneamente, o da correggere in futuro con una funzionalità di modifica). In quel caso ha senso poterlo riportare a CREATO o SOSPESO per correggere la situazione. Ciò che resta logicamente non ammissibile in ogni caso è dichiararlo VENDUTO, poiché al momento della vendita il biglietto risultava scaduto: venderlo retroattivamente introdurrebbe un'incoerenza nei dati che nessuna correzione successiva potrebbe giustificare.
 
-Implementazione: controllo esplicito nel service (`TicketService.updateStatus`), che lancia `InvalidStatusException` (mappata a HTTP 409 Conflict) se lo stato corrente è SCADUTO.
-
-
+Implementazione: controllo esplicito nel service (`TicketService.updateStatus`), che lancia `InvalidStatusException` (mappata a HTTP 409 Conflict) quando lo stato corrente è SCADUTO e il nuovo stato richiesto è VENDUTO.
 
 ## 3. Regole di pulizia del dataset seed
 
